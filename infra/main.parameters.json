@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "primaryLocation": {
+      "value": "eastus"
+    },
+    "secondaryLocation": {
+      "value": "westus"
+    },
+    "primarySqlServerName": {
+      "value": "<globally-unique-primary-sql-server-name>"
+    },
+    "secondarySqlServerName": {
+      "value": "<globally-unique-secondary-sql-server-name>"
+    },
+    "entraAdminLogin": {
+      "value": "<entra-admin-display-name>"
+    },
+    "entraAdminObjectId": {
+      "value": "<entra-admin-object-id-guid>"
+    },
+    "primaryDatabaseName": {
+      "value": "appdb-primary"
+    },
+    "secondaryDatabaseName": {
+      "value": "appdb-secondary"
+    },
+    "databaseSkuName": {
+      "value": "S0"
+    },
+    "databaseSkuTier": {
+      "value": "Standard"
+    }
+  }
+}
