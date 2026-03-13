@@ -1,0 +1,7 @@
+{
+  "name": "bicep-sqldb-named-replica",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {}
+  }
+}
