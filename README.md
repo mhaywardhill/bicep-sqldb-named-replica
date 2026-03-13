@@ -1,0 +1,1 @@
+# bicep-sqldb-named-replica
