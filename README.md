@@ -13,13 +13,21 @@ This deployment creates:
 
 ## Architecture
 
-```mermaid
-flowchart LR
-	RG[Resource Group] --> PRIMARY[Primary SQL Server]
-	RG --> SECONDARY[Secondary SQL Server]
-	PRIMARY --> PDB[Primary Database]
-	SECONDARY --> SDB[Secondary Database - Named Replica]
-	PDB -. Geo Replication .-> SDB
+```text
++------------------------------ Resource Group ---------------------------------+
+|                                                                               |
+|   +--------------------------+               +---------------------------+    |
+|   | Primary SQL Server       |               | Secondary SQL Server      |    |
+|   | (primary region)         |               | (secondary region)        |    |
+|   +-------------+------------+               +-------------+-------------+    |
+|                |                                           |                  |
+|                v                                           v                  |
+|    +-------------------------+               +----------------------------+   |
+|    | Primary Database        | == Geo Rep => | Secondary Database         |   |
+|    | appdb-primary           | <== Sync ===  | appdb-secondary (replica)  |   |
+|    +-------------------------+               +----------------------------+   |
+|                                                                               |
++-------------------------------------------------------------------------------+
 ```
 
 ## Repository Structure
@@ -131,3 +139,50 @@ The deployment returns:
 - The secondary database is created with `createMode: Secondary`, which establishes geo replication from the primary database.
 - Use regions that support your selected SQL SKU.
 - Restrict network access and configure failover strategy based on production requirements.
+
+## Failover
+
+To promote the secondary replica to become the new primary, run failover against the **secondary** database resource.
+
+Use the same environment variables from deployment:
+
+```bash
+export RESOURCE_GROUP="rg-sql-geo-replica-dev"
+export SECONDARY_SQL_SERVER_NAME="<globally-unique-secondary-sql-server-name>"
+export SECONDARY_DATABASE_NAME="appdb-secondary"
+```
+
+1. Planned failover (no data loss expected):
+
+```bash
+az sql db replica set-primary \
+	--resource-group "$RESOURCE_GROUP" \
+	--server "$SECONDARY_SQL_SERVER_NAME" \
+	--name "$SECONDARY_DATABASE_NAME"
+```
+
+2. Forced failover (use only when the primary is unavailable; may lose recent writes):
+
+```bash
+az sql db replica set-primary \
+	--resource-group "$RESOURCE_GROUP" \
+	--server "$SECONDARY_SQL_SERVER_NAME" \
+	--name "$SECONDARY_DATABASE_NAME" \
+	--allow-data-loss
+```
+
+3. Verify replica roles and link status:
+
+```bash
+az sql db replica list-links \
+	--resource-group "$RESOURCE_GROUP" \
+	--server "$SECONDARY_SQL_SERVER_NAME" \
+	--name "$SECONDARY_DATABASE_NAME" \
+	--output table
+```
+
+### Post-failover considerations
+
+- Update application connection strings to point at the new primary server FQDN.
+- If required, re-establish geo replication in the opposite direction.
+- In this repo defaults, `SECONDARY_DATABASE_NAME` is typically `appdb-secondary`.
